@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import User from "../models/User.js";
-import { compare, hash } from "bcrypt";
+import { compare, hash } from "bcryptjs";
 import { createToken } from "../utils/token-manager.js";
 import { COOKIE_NAME } from "../utils/constants.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
