@@ -7,8 +7,7 @@
   "scripts": {
     "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/index.js\" ",
     "start": "node dist/index.js",
-    "build": "tsc",
-    "postinstall": "npm rebuild bcrypt --build-from-source"
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
