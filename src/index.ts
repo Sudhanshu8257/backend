@@ -9,10 +9,15 @@ import cors from "cors";
 
 // ...
 const app = express();
+const corsConfig = {
+  origin: ["http://localhost:5173"],
+  credentials: true,
+};
 config({ path: [".env"] });
 app.use(express.json());
-app.use(cors({ origin: ["http://localhost:5173"],headers: ["Content-Type"], credentials: true }));
 
+app.use(cors(corsConfig));
+app.options('*', cors(corsConfig));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
 app.use("/api/v1", appRouter);
