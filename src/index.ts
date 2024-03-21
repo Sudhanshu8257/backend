@@ -10,7 +10,7 @@ import cors from "cors";
 // ...
 const app = express();
 const corsConfig = {
-  origin: ["http://localhost:5173"],
+  origin: ["http://localhost:5173","https://frontend-nine-umber-97.vercel.app"],
   credentials: true,
 };
 config({ path: [".env"] });
