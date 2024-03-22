@@ -42,7 +42,7 @@ export const userSignup = async (
     expires.setDate(expires.getDate() + 7);
     res.cookie(COOKIE_NAME, token, {
       path: "/",
-      domain: "frontend-nine-umber-97.vercel.app",
+      domain: "https://frontend-nine-umber-97.vercel.app/",
       expires,
       httpOnly: true,
       signed: true,
@@ -71,7 +71,7 @@ export const userLogin = async (
     const isPasswordCorrect = await compare(password, user.password);
     if (!isPasswordCorrect) return res.status(403).send("Incorrect password");
     res.clearCookie(COOKIE_NAME, {
-      domain: "frontend-nine-umber-97.vercel.app",
+      domain: "https://frontend-nine-umber-97.vercel.app/",
       httpOnly: true,
       signed: true,
       path: "/",
@@ -82,7 +82,7 @@ export const userLogin = async (
     expires.setDate(expires.getDate() + 7);
     res.cookie(COOKIE_NAME, token, {
       path: "/",
-      domain: "frontend-nine-umber-97.vercel.app",
+      domain: "https://frontend-nine-umber-97.vercel.app/",
       expires,
       httpOnly: true,
       signed: true,
@@ -155,7 +155,7 @@ export const userLogout = async (
 
     res.clearCookie(COOKIE_NAME, {
       httpOnly: true,
-      domain: "localhost",
+      domain: "https://frontend-nine-umber-97.vercel.app/",
       signed: true,
       path: "/",
     });
