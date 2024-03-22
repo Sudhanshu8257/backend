@@ -80,13 +80,13 @@ export const userLogin = async (
     const token = createToken(user.id.toString(), user.email, "7d");
     const expires = new Date();
     expires.setDate(expires.getDate() + 7);
-    res.cookie(COOKIE_NAME, token, {
-      path: "/",
-      domain: "https://frontend-nine-umber-97.vercel.app/",
-      expires,
-      httpOnly: true,
-      signed: true,
-    });
+res.cookie(COOKIE_NAME, token, {
+  path: "/",
+  domain: "frontend-nine-umber-97.vercel.app",
+  expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Expires in a week
+  httpOnly: true,
+  signed: true,
+});
 
     return res
       .status(200)
