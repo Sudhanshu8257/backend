@@ -17,7 +17,6 @@ config({ path: [".env"] });
 app.use(express.json());
 
 app.use(cors(corsConfig));
-app.options('*', cors(corsConfig));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
 app.use("/api/v1", appRouter);
