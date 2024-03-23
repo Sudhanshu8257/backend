@@ -73,7 +73,7 @@ export const userLogin = async (
     const isPasswordCorrect = await compare(password, user.password);
     if (!isPasswordCorrect) return res.status(403).send("Incorrect password");
     res.clearCookie(COOKIE_NAME, {
-      domain: "https://frontend-nine-umber-97.vercel.app/",
+      domain: "backend-sepia-omega.vercel.app",
       httpOnly: true,
       signed: true,
       path: "/",
