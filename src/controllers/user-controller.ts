@@ -46,6 +46,8 @@ export const userSignup = async (
       expires,
       httpOnly: true,
       signed: true,
+      sameSite: 'none',
+      secure:true,
     });
 
     return res
@@ -83,9 +85,11 @@ export const userLogin = async (
 res.cookie(COOKIE_NAME, token, {
   path: "/",
   domain: "frontend-nine-umber-97.vercel.app",
-  expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Expires in a week
+  expires, // Expires in a week
   httpOnly: true,
   signed: true,
+  sameSite: 'none',
+  secure:true,
 });
 
     return res
