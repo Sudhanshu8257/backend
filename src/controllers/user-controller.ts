@@ -88,8 +88,6 @@ res.cookie(COOKIE_NAME, token, {
   domain: "backend-sepia-omega.vercel.app",
   httpOnly: true,
   signed: true,
-  sameSite: 'none',
-  secure:true,
 });
 
     return res
