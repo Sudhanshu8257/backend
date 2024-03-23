@@ -84,7 +84,6 @@ export const userLogin = async (
     expires.setDate(expires.getDate() + 7);
 res.cookie(COOKIE_NAME, token, {
   path: "/",
-  domain: "frontend-nine-umber-97.vercel.app",
   expires, // Expires in a week
   httpOnly: true,
   signed: true,
