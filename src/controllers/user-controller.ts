@@ -46,8 +46,6 @@ export const userSignup = async (
       expires,
       httpOnly: true,
       signed: true,
-      sameSite: 'none',
-      secure:true,
     });
 
     return res
@@ -73,21 +71,21 @@ export const userLogin = async (
     const isPasswordCorrect = await compare(password, user.password);
     if (!isPasswordCorrect) return res.status(403).send("Incorrect password");
     res.clearCookie(COOKIE_NAME, {
+      path: "/",
       domain: "backend-sepia-omega.vercel.app",
       httpOnly: true,
       signed: true,
-      path: "/",
     });
 
     const token = createToken(user.id.toString(), user.email, "7d");
     const expires = new Date();
     expires.setDate(expires.getDate() + 7);
 res.cookie(COOKIE_NAME, token, {
-  path: "/",
-  expires, // Expires in a week
-  domain: "backend-sepia-omega.vercel.app",
-  httpOnly: true,
-  signed: true,
+      path: "/",
+      domain: "backend-sepia-omega.vercel.app",
+      expires,
+      httpOnly: true,
+      signed: true,
 });
 
     return res
@@ -156,10 +154,10 @@ export const userLogout = async (
     }
 
     res.clearCookie(COOKIE_NAME, {
-      httpOnly: true,
-      domain: "backend-sepia-omega.vercel.app",
-      signed: true,
       path: "/",
+      domain: "backend-sepia-omega.vercel.app",
+      httpOnly: true,
+      signed: true,
     });
 
     return res
