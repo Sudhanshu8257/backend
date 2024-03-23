@@ -10,8 +10,8 @@ import cors from "cors";
 // ...
 const app = express();
 const corsConfig = {
-  origin: ["http://localhost:5173","https://frontend-nine-umber-97.vercel.app"],
   credentials: true,
+  origin: ["http://localhost:5173","https://frontend-nine-umber-97.vercel.app"],
 };
 config({ path: [".env"] });
 app.use(express.json());
