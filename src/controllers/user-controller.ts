@@ -42,7 +42,7 @@ export const userSignup = async (
     expires.setDate(expires.getDate() + 7);
     res.cookie(COOKIE_NAME, token, {
       path: "/",
-      domain: "https://frontend-nine-umber-97.vercel.app/",
+      domain: "backend-sepia-omega.vercel.app",
       expires,
       httpOnly: true,
       signed: true,
@@ -85,6 +85,7 @@ export const userLogin = async (
 res.cookie(COOKIE_NAME, token, {
   path: "/",
   expires, // Expires in a week
+  domain: "backend-sepia-omega.vercel.app",
   httpOnly: true,
   signed: true,
   sameSite: 'none',
@@ -158,7 +159,7 @@ export const userLogout = async (
 
     res.clearCookie(COOKIE_NAME, {
       httpOnly: true,
-      domain: "https://frontend-nine-umber-97.vercel.app/",
+      domain: "backend-sepia-omega.vercel.app",
       signed: true,
       path: "/",
     });
