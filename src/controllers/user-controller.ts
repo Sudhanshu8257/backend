@@ -74,7 +74,6 @@ export const userLogin = async (
       path: "/",
       domain: "backend-sepia-omega.vercel.app",
       httpOnly: true,
-      signed: true,
     });
 
     const token = createToken(user.id.toString(), user.email, "7d");
