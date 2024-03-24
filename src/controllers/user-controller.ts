@@ -82,9 +82,8 @@ export const userLogin = async (
 res.cookie(COOKIE_NAME, token, {
 path: "/",  // Accessible from all paths on your backend domain
   domain: "backend-sepia-omega.vercel.app",  // Not needed for CORS
-  httpOnly: true,
-  secure: true, // Recommended for JWTs
-  signed: true,
+  httpOnly: true, // prevent XSS attacks cross-site scripting attacks
+		sameSite: "strict", // CSRF attacks cross-site request forgery attacks
 });
 
     return res
