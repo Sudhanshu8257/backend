@@ -79,12 +79,12 @@ export const userLogin = async (
     const token = createToken(user.id.toString(), user.email, "7d");
     const expires = new Date();
     expires.setDate(expires.getDate() + 7);
-res.cookie(COOKIE_NAME, token, {
-path: "/",  // Accessible from all paths on your backend domain
-  domain: "backend-sepia-omega.vercel.app",  // Not needed for CORS
-  httpOnly: true, // prevent XSS attacks cross-site scripting attacks
-		sameSite: "strict", // CSRF attacks cross-site request forgery attacks
-});
+    res.cookie(COOKIE_NAME, token, {
+	httpOnly: true, //accessible only by web server 
+        secure: true, //https
+        sameSite: 'None', //cross-site cookie 
+	expires,
+    });
 
     return res
       .status(200)
