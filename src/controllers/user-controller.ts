@@ -84,8 +84,8 @@ res.cookie(COOKIE_NAME, token, {
       domain: "backend-sepia-omega.vercel.app",
       expires,
       httpOnly: true,
-  'samesite' => 'None',
-  'secure' => true,
+sameSite: 'None', // Corrected
+  secure: true, // Corrected
 });
 
     return res
