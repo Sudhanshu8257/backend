@@ -80,12 +80,11 @@ export const userLogin = async (
     const expires = new Date();
     expires.setDate(expires.getDate() + 7);
 res.cookie(COOKIE_NAME, token, {
-      path: "/",
-      domain: "backend-sepia-omega.vercel.app",
-      expires,
-      httpOnly: true,
-      // secure: true, // Corrected
-      signed : true,
+path: "/",  // Accessible from all paths on your backend domain
+  // domain: "backend-sepia-omega.vercel.app",  // Not needed for CORS
+  expires,  // Set expiration time (optional but recommended)
+  httpOnly: true,  // Prevents JavaScript access for security
+  secure: true   // Highly recommended for sensitive cookies (refresh tokens)
 });
 
     return res
