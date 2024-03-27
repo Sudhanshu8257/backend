@@ -81,8 +81,7 @@ export const userLogin = async (
     expires.setDate(expires.getDate() + 7);
     res.cookie(COOKIE_NAME, token, {
 	httpOnly: true, //accessible only by web server 
-        secure: true, //https
-        sameSite: 'None', //cross-site cookie 
+        sameSite: 'Lax', //cross-site cookie 
 	expires,
     });
 
