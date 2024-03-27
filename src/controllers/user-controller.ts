@@ -78,8 +78,8 @@ export const userLogin = async (
     const expires = new Date();
     expires.setDate(expires.getDate() + 7);
     res.cookie(COOKIE_NAME, token, {
-	httpOnly: true, //accessible only by web server 
-        sameSite: 'Lax', //cross-site cookie 
+	path: "/",
+        domain: "backend-sepia-omega.vercel.app",
 	expires,
     });
 
