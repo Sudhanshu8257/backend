@@ -44,8 +44,6 @@ export const userSignup = async (
       path: "/",
       domain: "backend-sepia-omega.vercel.app",
       expires,
-      httpOnly: true,
-      signed: true,
     });
 
     return res
