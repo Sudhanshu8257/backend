@@ -79,7 +79,7 @@ export const userLogin = async (
     expires.setDate(expires.getDate() + 7);
     res.cookie(COOKIE_NAME, token, {
 	path: "/",
-        domain: "backend-sepia-omega.vercel.app",
+        domain: "https://backend-sepia-omega.vercel.app/",
 	expires,
     });
 
