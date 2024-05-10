@@ -84,7 +84,7 @@ export const userLogin = async (
  //        domain: "https://backend-sepia-omega.vercel.app/",
 	// expires,
  //    });
-    res.cookie(COOKIE_NAME, token);
+    res.cookie(COOKIE_NAME, token,{SameSite=None; Secure,expires});
 
     return res
       .status(200)
