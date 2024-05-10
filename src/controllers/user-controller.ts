@@ -155,6 +155,7 @@ export const userLogout = async (
 try{res.clearCookie(COOKIE_NAME, {
   sameSite: "none",
   secure: true,
+	signed : true,
 });} catch(e){
 console.log("e =>",e)
 }
