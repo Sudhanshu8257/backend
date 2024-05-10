@@ -84,7 +84,7 @@ export const userLogin = async (
  //        domain: "https://backend-sepia-omega.vercel.app/",
 	// expires,
  //    });
-    res.cookie(COOKIE_NAME, token,{sameSite: 'None', secure: true , expires , signed :true });
+    res.cookie(COOKIE_NAME, token,{sameSite: 'None', secure: true , expires  });
 
     return res
       .status(200)
@@ -155,7 +155,6 @@ export const userLogout = async (
 try{res.clearCookie(COOKIE_NAME, {
   sameSite: "none",
   secure: true,
-	signed : true,
 });} catch(e){
 console.log("e =>",e)
 }
