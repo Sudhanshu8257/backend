@@ -13,7 +13,7 @@ export const verifyToken = async (
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.signedCookies[`${COOKIE_NAME}`];
+  const token = req.cookies[`${COOKIE_NAME}`];
   return new Promise<void>((resolve, reject) => {
     if (!token || token.trim() === "")
       return res.status(400).json({ message: "token not recived" });
