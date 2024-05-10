@@ -14,7 +14,7 @@ export const verifyToken = async (
   next: NextFunction
 ) => {
   console.log("request ==>",req.cookies)
-  const token = req.cookies[`${COOKIE_NAME}`];
+  const token = req.signedCookies[`${COOKIE_NAME}`];
   console.log("cookie token => ",token,COOKIE_NAME)
   return new Promise<void>((resolve, reject) => {
     if (!token || token.trim() === "")
