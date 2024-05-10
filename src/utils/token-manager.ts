@@ -13,8 +13,8 @@ export const verifyToken = async (
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.signedCookies[`${COOKIE_NAME}`];
-  console.log("request ==>",req)
+  console.log("request ==>",req.cookies)
+  const token = req.cookies[`${COOKIE_NAME}`];
   console.log("cookie token => ",token,COOKIE_NAME)
   return new Promise<void>((resolve, reject) => {
     if (!token || token.trim() === "")
