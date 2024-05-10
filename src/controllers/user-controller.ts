@@ -151,12 +151,7 @@ export const userLogout = async (
       return res.status(401).send("Permissions didn't match");
     }
 
-    res.clearCookie(COOKIE_NAME, {
-      path: "/",
-      domain: "backend-sepia-omega.vercel.app",
-      httpOnly: true,
-      signed: true,
-    });
+    res.clearCookie(COOKIE_NAME);
 
     return res
       .status(200)
