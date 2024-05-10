@@ -78,11 +78,13 @@ export const userLogin = async (
     const token = createToken(user.id.toString(), user.email, "7d");
     const expires = new Date();
     expires.setDate(expires.getDate() + 7);
-    res.cookie(COOKIE_NAME, token, {
-	path: "/",
-        domain: "https://backend-sepia-omega.vercel.app/",
-	expires,
-    });
+	 
+ //    res.cookie(COOKIE_NAME, token, {
+	// path: "/",
+ //        domain: "https://backend-sepia-omega.vercel.app/",
+	// expires,
+ //    });
+	  res.cookie(COOKIE_NAME, token,  { httpOnly: true, sameSite: 'strict',  domain: "https://backend-sepia-omega.vercel.app/", expires, });
 
     return res
       .status(200)
