@@ -21,7 +21,12 @@ app.use(cors(corsConfig));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 app.get("/", (req, res) => {
   const message = welcomeMessage();
-  res.send(`<p>${ message }</p>`);
+  res.send(`<p style="background-image: linear-gradient(to right, #f77979, #9b59b6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 1.2em;
+  padding: 10px;
+  border-radius: 5px;">${message}</p>`);
 });
 app.use("/api/v1", appRouter);
 const PORT = process.env.PORT || 3000;
