@@ -30,6 +30,7 @@ export const userSignup = async (
   next: NextFunction
 ) => {
   try {
+    const { hash } = pkg;
     const { name, email, password } = req.body;
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(401).send("user already registered");
@@ -61,6 +62,7 @@ export const userLogin = async (
   next: NextFunction
 ) => {
   try {
+    const { compare } = pkg;
     const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user) {
