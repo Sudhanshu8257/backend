@@ -152,10 +152,12 @@ export const userLogout = async (
     }
 
     // res.clearCookie(COOKIE_NAME,{sameSite: 'None', secure: true  , signed :true,path: "/", domain: "backend-sepia-omega.vercel.app",});
-res.clearCookie(COOKIE_NAME, {
+try{res.clearCookie(COOKIE_NAME, {
   sameSite: "none",
   secure: true,
-});
+});} catch(e){
+console.log("e =>",e)
+}
     return res
       .status(200)
       .json({ message: "OK", name: user.name, email: user.email });
