@@ -40,10 +40,10 @@ export const userSignup = async (
     const token = createToken(user.id.toString(), user.email, "7d");
     const expires = new Date();
     expires.setDate(expires.getDate() + 7);
-    res.cookie(COOKIE_NAME, token, {
-      path: "/",
-      domain: "backend-sepia-omega.vercel.app",
-      expires,
+    res.cookie(COOKIE_NAME, token,{
+	    sameSite: 'None',
+	    secure: true ,
+	    expires  
     });
 
     return res
@@ -70,21 +70,18 @@ export const userLogin = async (
     const isPasswordCorrect = await compare(password, user.password);
     if (!isPasswordCorrect) return res.status(403).send("Incorrect password");
     res.clearCookie(COOKIE_NAME, {
-      path: "/",
-      domain: "backend-sepia-omega.vercel.app",
-      httpOnly: true,
+	sameSite: "none",
+ 	secure: true,
     });
 
     const token = createToken(user.id.toString(), user.email, "7d");
     const expires = new Date();
     expires.setDate(expires.getDate() + 7);
-	 
- //    res.cookie(COOKIE_NAME, token, {
-	// path: "/",
- //        domain: "https://backend-sepia-omega.vercel.app/",
-	// expires,
- //    });
-    res.cookie(COOKIE_NAME, token,{sameSite: 'None', secure: true , expires  });
+    res.cookie(COOKIE_NAME, token,{
+	    sameSite: 'None', 
+	    secure: true , 
+	    expires  
+    });
 
     return res
       .status(200)
@@ -150,15 +147,10 @@ export const userLogout = async (
     if (user._id.toString() !== res.locals.jwtData.id) {
       return res.status(401).send("Permissions didn't match");
     }
-
-    // res.clearCookie(COOKIE_NAME,{sameSite: 'None', secure: true  , signed :true,path: "/", domain: "backend-sepia-omega.vercel.app",});
-try{res.clearCookie(COOKIE_NAME, {
-  sameSite: "none",
-  secure: true,
-});} catch(e){
-console.log("e =>",e)
-}
-console.log("response =>",res)
+    res.clearCookie(COOKIE_NAME, {
+	sameSite: "none",
+ 	secure: true,
+    });
     return res
       .status(200)
       .json({ message: "OK", name: user.name, email: user.email });
