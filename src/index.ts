@@ -24,7 +24,8 @@ app.get("/", (req, res) => {
   res.send(`<p style="background-image: linear-gradient(to right, #f77979, #9b59b6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  font-size: 1.2em;
+  font-size: 2em;
+  margin-top: 24px;
   padding: 10px;
   text-align: center;
   border-radius: 5px;">${message}</p>`);
