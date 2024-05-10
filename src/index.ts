@@ -26,6 +26,7 @@ app.get("/", (req, res) => {
   -webkit-text-fill-color: transparent;
   font-size: 1.2em;
   padding: 10px;
+  text-align: center;
   border-radius: 5px;">${message}</p>`);
 });
 app.use("/api/v1", appRouter);
