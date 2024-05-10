@@ -158,6 +158,7 @@ try{res.clearCookie(COOKIE_NAME, {
 });} catch(e){
 console.log("e =>",e)
 }
+console.log("response =>",res)
     return res
       .status(200)
       .json({ message: "OK", name: user.name, email: user.email });
