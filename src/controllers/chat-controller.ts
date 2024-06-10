@@ -17,7 +17,10 @@ export async function getChat(req: Request, res: Response, next: NextFunction) {
     const last20Messages = chats.slice(-20);
     user.chats.push({ parts: message, role: "user" });
 
-    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+    const model = genAI.getGenerativeModel({ 
+      model: GEMINI_MODEL,
+      systemInstruction: "You are a factual AI assistant named Converse. You can access and process information from the real world to answer user questions in a comprehensive and informative way."
+    });
 
     const chat = model.startChat({
       history: last20Messages,
