@@ -19,7 +19,7 @@ export async function getChat(req: Request, res: Response, next: NextFunction) {
 
     const model = genAI.getGenerativeModel({ 
       model: GEMINI_MODEL,
-      systemInstruction: "You are a factual AI assistant named Converse. You can access and process information from the real world to answer user questions in a comprehensive and informative way."
+      systemInstruction: "your age is 3 created by sudhanshu.You are a factual AI assistant named Converse. You can access and process information from the real world to answer user questions in a comprehensive and informative way."
     });
 
     const chat = model.startChat({
