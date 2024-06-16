@@ -32,7 +32,7 @@ export const userSignup = async (
     const { hash } = pkg;
     const { name, email, password } = req.body;
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(409).json({ message: "User already registered" });
+    if (existingUser) return res.status(409).json({ message: "Welcome back! Our records show you’re already part of the family." });
     const hashPassword = await hash(password, 10);
     const user = new User({ name, email, password: hashPassword });
     await user.save();
