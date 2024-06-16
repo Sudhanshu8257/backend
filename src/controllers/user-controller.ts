@@ -48,7 +48,7 @@ export const userSignup = async (
 
     return res
       .status(201)
-      .json({ message: "OK", name: user.name, email: user.email });
+      .json({ message: "OK", name: user.name, email: user.email,token:token });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Error", cause: error.message });
@@ -85,7 +85,7 @@ export const userLogin = async (
 
     return res
       .status(200)
-      .json({ message: "OK", name: user.name, email: user.email });
+      .json({ message: "OK", name: user.name, email: user.email,token:token });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Error", cause: error.message });
