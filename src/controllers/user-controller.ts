@@ -68,7 +68,7 @@ export const userLogin = async (
       return res.status(401).send("User not registered");
     }
     const isPasswordCorrect = await compare(password, user.password);
-    if (!isPasswordCorrect) return res.status(403).send("Incorrect password");
+    if (!isPasswordCorrect) return res.status(403).json({ message: "Hmmm, that password didn’t click. Double-check and retry!" });
     res.clearCookie(COOKIE_NAME, {
 	sameSite: "none",
  	secure: true,
