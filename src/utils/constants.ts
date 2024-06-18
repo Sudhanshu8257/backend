@@ -1,5 +1,5 @@
 export const COOKIE_NAME = "auth_token";
-export const GEMINI_MODEL = "gemini-pro";
+export const GEMINI_MODEL = "gemini-1.5-flash";
 export function welcomeMessage() {
     const messages = [
       "Greetings, fellow human! Ready to explore the wonders of AI conversation?",
