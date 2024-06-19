@@ -8,6 +8,7 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 export async function getChat(req: Request, res: Response, next: NextFunction) {
   const { message } = req.body;
+  console.log("message recived =>" , message);
   try {
     const user = await User.findById(res.locals.jwtData.id);
     if (!user) return res.status(401).json({ message: "Try logging in again" });
@@ -31,6 +32,7 @@ export async function getChat(req: Request, res: Response, next: NextFunction) {
 
     const text = response.text();
     const geminiResponse = { role: "model", parts: text };
+    console.log("geminiResponse=>" , geminiResponse);
     user.chats.push(geminiResponse);
     await user.save();
     return res.status(200).json({ chats: geminiResponse });
