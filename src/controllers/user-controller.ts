@@ -123,13 +123,11 @@ export async function runy(req: Request, res: Response, next: NextFunction) {
   const chat = model.startChat();
   //"How many paws are in my house?"
   const ressss = await chat.getHistory();
-  console.log(ressss);
   const msg = message;
 
   const result = await chat.sendMessage(msg);
   const response = await result.response;
   const text = response.text();
-  console.log(text);
   return res.send(text);
 }
 

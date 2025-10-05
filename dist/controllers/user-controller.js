@@ -1,5 +1,5 @@
 import User from "../models/User.js";
-import { compare, hash } from "bcrypt";
+import pkg from 'bcryptjs';
 import { createToken } from "../utils/token-manager.js";
 import { COOKIE_NAME } from "../utils/constants.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -18,10 +18,11 @@ export const getAllUsers = async (req, res, next) => {
 };
 export const userSignup = async (req, res, next) => {
     try {
+        const { hash } = pkg;
         const { name, email, password } = req.body;
         const existingUser = await User.findOne({ email });
         if (existingUser)
-            return res.status(401).send("user already registered");
+            return res.status(409).json({ message: "Welcome back! Our records show you’re already part of the family." });
         const hashPassword = await hash(password, 10);
         const user = new User({ name, email, password: hashPassword });
         await user.save();
@@ -29,15 +30,13 @@ export const userSignup = async (req, res, next) => {
         const expires = new Date();
         expires.setDate(expires.getDate() + 7);
         res.cookie(COOKIE_NAME, token, {
-            path: "/",
-            domain: "localhost",
-            expires,
-            httpOnly: true,
-            signed: true,
+            sameSite: 'None',
+            secure: true,
+            expires
         });
         return res
             .status(201)
-            .json({ message: "OK", name: user.name, email: user.email });
+            .json({ message: "OK", name: user.name, email: user.email, token: token });
     }
     catch (error) {
         console.log(error);
@@ -46,6 +45,7 @@ export const userSignup = async (req, res, next) => {
 };
 export const userLogin = async (req, res, next) => {
     try {
+        const { compare } = pkg;
         const { email, password } = req.body;
         const user = await User.findOne({ email });
         if (!user) {
@@ -53,26 +53,22 @@ export const userLogin = async (req, res, next) => {
         }
         const isPasswordCorrect = await compare(password, user.password);
         if (!isPasswordCorrect)
-            return res.status(403).send("Incorrect password");
+            return res.status(403).json({ message: "Hmmm, that password didn’t click. Double-check and retry!" });
         res.clearCookie(COOKIE_NAME, {
-            domain: "localhost",
-            httpOnly: true,
-            signed: true,
-            path: "/",
+            sameSite: "none",
+            secure: true,
         });
         const token = createToken(user.id.toString(), user.email, "7d");
         const expires = new Date();
         expires.setDate(expires.getDate() + 7);
         res.cookie(COOKIE_NAME, token, {
-            path: "/",
-            domain: "localhost",
-            expires,
-            httpOnly: true,
-            signed: true,
+            sameSite: 'None',
+            secure: true,
+            expires
         });
         return res
             .status(200)
-            .json({ message: "OK", name: user.name, email: user.email });
+            .json({ message: "OK", name: user.name, email: user.email, token: token });
     }
     catch (error) {
         console.log(error);
@@ -105,12 +101,10 @@ export async function runy(req, res, next) {
     const chat = model.startChat();
     //"How many paws are in my house?"
     const ressss = await chat.getHistory();
-    console.log(ressss);
     const msg = message;
     const result = await chat.sendMessage(msg);
     const response = await result.response;
     const text = response.text();
-    console.log(text);
     return res.send(text);
 }
 export const userLogout = async (req, res, next) => {
@@ -124,10 +118,8 @@ export const userLogout = async (req, res, next) => {
             return res.status(401).send("Permissions didn't match");
         }
         res.clearCookie(COOKIE_NAME, {
-            httpOnly: true,
-            domain: "localhost",
-            signed: true,
-            path: "/",
+            sameSite: "none",
+            secure: true,
         });
         return res
             .status(200)

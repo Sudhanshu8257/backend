@@ -6,7 +6,7 @@ export const createToken = (id, email, expiresIn) => {
     return token;
 };
 export const verifyToken = async (req, res, next) => {
-    const token = req.signedCookies[`${COOKIE_NAME}`];
+    const token = req.cookies[`${COOKIE_NAME}`];
     return new Promise((resolve, reject) => {
         if (!token || token.trim() === "")
             return res.status(400).json({ message: "token not recived" });
