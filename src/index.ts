@@ -30,10 +30,24 @@ app.use(cookieParser(process.env.COOKIE_SECRET));
 //   text-align: center;
 //   border-radius: 5px;">${message}</p>`);
 // });
+
+
+app.get("/", (req, res) => {
+  const message = welcomeMessage();
+    res.send(`<p style="background-image: linear-gradient(to right, #f77979, #9b59b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2em;
+    margin-top: 24px;
+    padding: 10px;
+    text-align: center;
+    border-radius: 5px;">${message}</p>`);
+  });
+
 app.use("/api/v1", appRouter);
 const PORT = process.env.PORT || 3000;
 connectToDatabase()
   .then(() => {
-    app.listen(PORT, () => console.log("server open"));
+    app.listen(PORT, () => console.log("server open on",PORT));
   })
   .catch((err) => console.log(err));
