@@ -7,6 +7,12 @@ import appRouter from "./routes/index.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { welcomeMessage } from "./utils/constants.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// Get __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ...
 const app = express();
@@ -31,7 +37,7 @@ app.use(cookieParser(process.env.COOKIE_SECRET));
 //   border-radius: 5px;">${message}</p>`);
 // });
 
-
+app.use('/celebs', express.static(path.join(__dirname, '../celebs')));
 app.get("/", (req, res) => {
   const message = welcomeMessage();
     res.send(`<p style="background-image: linear-gradient(to right, #f77979, #9b59b6);
