@@ -38,6 +38,7 @@ app.use(cookieParser(process.env.COOKIE_SECRET));
 // });
 
 app.use('/celebs', express.static(path.join(__dirname, '../celebs')));
+app.use('/anime', express.static(path.join(__dirname, '../anime')));
 app.get("/", (req, res) => {
   const message = welcomeMessage();
     res.send(`<p style="background-image: linear-gradient(to right, #f77979, #9b59b6);
