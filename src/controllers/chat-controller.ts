@@ -415,10 +415,10 @@ export async function getAllPersonalities(
     if (search) {
       pipeline.push({
         $search: {
-          index: "fullName",
+          index: "firstName_text_lastName_text",
           text: {
             query: String(search).toLowerCase(),
-            path: "fullName",
+            path: "_fts",
             fuzzy: { maxEdits: 1 },
           },
         },
