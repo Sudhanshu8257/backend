@@ -35,10 +35,11 @@ app.use(cookieParser(process.env.COOKIE_SECRET));
 //   padding: 10px;
 //   text-align: center;
 //   border-radius: 5px;">${message}</p>`);
-// });
+// });u')))
 
 app.use('/celebs', express.static(path.join(__dirname, '../celebs')));
 app.use('/anime', express.static(path.join(__dirname, '../anime')));
+app.use('/user', express.static(path.join(__dirname, '../user')));
 app.get("/", (req, res) => {
   const message = welcomeMessage();
     res.send(`<p style="background-image: linear-gradient(to right, #f77979, #9b59b6);
