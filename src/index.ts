@@ -18,10 +18,17 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const corsConfig = {
   credentials: true,
-  origin: ["http://localhost:5173","https://frontend-nine-umber-97.vercel.app"],
+  origin: ["http://localhost:3000","http://localhost:5173","https://frontend-nine-umber-97.vercel.app"],
 };
 config({ path: [".env"] });
-app.use(express.json());
+app.use(express.json({
+  limit: "50mb"
+}));
+
+app.use(express.urlencoded({
+  limit: "50mb",
+  extended: true
+}));
 
 app.use(cors(corsConfig));
 app.use(cookieParser(process.env.COOKIE_SECRET));
