@@ -8,6 +8,7 @@ import PosterSession from "../models/PosterSession.js";
 import "dotenv/config";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+console.log("STRIPE KEY",!!process.env.STRIPE_SECRET_KEY)
 const resend = new Resend(process.env.RESEND_API_KEY);
 const client = new ImageKit({
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
