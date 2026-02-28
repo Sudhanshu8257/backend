@@ -5,7 +5,6 @@ import { createCanvas, loadImage } from "canvas";
 import { Resend } from "resend";
 import ImageKit, { toFile } from "@imagekit/nodejs";
 import PosterSession from "../models/PosterSession.js";
-import "dotenv/config";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 console.log("STRIPE KEY",!!process.env.STRIPE_SECRET_KEY)
