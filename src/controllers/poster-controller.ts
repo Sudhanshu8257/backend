@@ -149,7 +149,7 @@ export const saveSession = async (
 // -------------------------------------------------------
 export const stripeWebhook = async (req: Request, res: Response) => {
   const sig = req.headers["stripe-signature"];
-
+  console.log("process.env.STRIPE_WEBHOOK_SECRET",process.env.STRIPE_WEBHOOK_SECRET)
   let event: Stripe.Event;
 
   try {
