@@ -9,6 +9,7 @@ import cors from "cors";
 import { welcomeMessage } from "./utils/constants.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import { stripeWebhook } from "./controllers/poster-controller.js";
 
 // Get __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -21,6 +22,13 @@ const corsConfig = {
   origin: ["http://localhost:3000","http://localhost:5173","https://frontend-nine-umber-97.vercel.app"],
 };
 config({ path: [".env"] });
+
+app.post(
+  "/api/v1/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  stripeWebhook
+);
+
 app.use(express.json({
   limit: "50mb"
 }));
