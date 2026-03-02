@@ -180,7 +180,7 @@ export const stripeWebhook = async (req: Request, res: Response) => {
 
       // Email the download link
       await resend.emails.send({
-        from: "One Piece Poster <noreply@yourdomain.com>",
+        from: "One Piece Poster <onboarding@resend.dev>",
         to: email,
         subject: "Your One Piece Poster is Ready! 🏴‍☠️",
         html: `
