@@ -6,7 +6,9 @@ import { Resend } from "resend";
 import ImageKit, { toFile } from "@imagekit/nodejs";
 import PosterSession from "../models/PosterSession.js";
 
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+console.log("server",process.env.STRIPE_SECRET_KEY)
 const resend = new Resend(process.env.RESEND_API_KEY);
 const client = new ImageKit({
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
