@@ -7,7 +7,6 @@ import ImageKit, { toFile } from "@imagekit/nodejs";
 import PosterSession from "../models/PosterSession.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-console.log("STRIPE KEY",!!process.env.STRIPE_SECRET_KEY)
 const resend = new Resend(process.env.RESEND_API_KEY);
 const client = new ImageKit({
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
@@ -71,33 +70,24 @@ const renderAndUpload = async (session: any): Promise<string> => {
 export const saveSession = async (
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ) => {
   try {
-    const {
-      canvasImage, // base64 string
-      posterName,
-      textSize,
-      textPosition, // { x, y }
-      imagePosition, // { x, y }
-      imageSize, // { width, height }
-    } = req.body;
+    const { posterBase64, posterName } = req.body;
 
-    if (!canvasImage || !posterName) {
-      return res.status(400).json({ message: "Missing required canvas data" });
+    if (!posterBase64 || !posterName) {
+      return res
+        .status(400)
+        .json({ message: "Missing posterBase64 or posterName" });
     }
 
     const sessionId = uuidv4();
 
-    // Save canvas state to MongoDB
+    // Save base64 + name to MongoDB
     await PosterSession.create({
       sessionId,
-      canvasImage,
+      posterBase64,
       posterName,
-      textSize,
-      textPosition,
-      imagePosition,
-      imageSize,
       status: "pending",
     });
 
@@ -109,7 +99,7 @@ export const saveSession = async (
         {
           price_data: {
             currency: "usd",
-            unit_amount: 199, // $1.99 in cents
+            unit_amount: 199, // $1.99
             product_data: {
               name: "One Piece Poster Download",
               description: `Custom poster for ${posterName}`,
@@ -118,18 +108,15 @@ export const saveSession = async (
           quantity: 1,
         },
       ],
-      metadata: {
-        sessionId, // bridge between Stripe and our DB
-      },
-      // posterUrl added dynamically after webhook renders — placeholder for now
-      success_url: `http://localhost:3000/success?session=${sessionId}&posterUrl=pending`,
+      metadata: { sessionId }, // bridge to webhook
+      success_url: `http://localhost:3000/success?session=${sessionId}`,
       cancel_url: `http://localhost:3000/test2`,
     });
 
-    // Save stripeSessionId to DB
+    // Save stripeSessionId
     await PosterSession.findOneAndUpdate(
       { sessionId },
-      { stripeSessionId: checkoutSession.id },
+      { stripeSessionId: checkoutSession.id }
     );
 
     return res.status(200).json({ checkoutUrl: checkoutSession.url });
@@ -148,7 +135,6 @@ export const saveSession = async (
 // -------------------------------------------------------
 export const stripeWebhook = async (req: Request, res: Response) => {
   const sig = req.headers["stripe-signature"];
-  console.log("process.env.STRIPE_WEBHOOK_SECRET",process.env.STRIPE_WEBHOOK_SECRET)
   let event: Stripe.Event;
 
   try {
@@ -162,56 +148,67 @@ export const stripeWebhook = async (req: Request, res: Response) => {
     return res.status(400).send(`Webhook Error: ${error.message}`);
   }
 
-  console.log("event.type >",event?.type)
-
   if (event.type === "checkout.session.completed") {
     const stripeSession = event.data.object as Stripe.Checkout.Session;
     const { sessionId } = stripeSession.metadata;
-    console.log("sessionId >",sessionId)
     const email = stripeSession.customer_details?.email;
     const customerName = stripeSession.customer_details?.name || "Nakama";
 
     try {
-      // Find the saved canvas session
       const posterSession = await PosterSession.findOne({ sessionId });
-      if (!posterSession) throw new Error("PosterSession not found");
+      if (!posterSession) throw new Error("Session not found");
 
-      // Render poster and upload to ImageKit
-      const posterUrl = await renderAndUpload(posterSession);
-        console.log(posterUrl)
-      // Save email, posterUrl, mark as paid
+      const uploadResponse = await client.files.upload({
+        file: posterSession.posterBase64,
+        fileName: `poster_${sessionId}.png`,
+
+        folder: "/posters",
+      });
+      const posterUrl = uploadResponse.url;
+
+      // Mark as paid, save email + posterUrl, clear base64 to save space
       await PosterSession.findOneAndUpdate(
         { sessionId },
-        { status: "paid", email, posterUrl },
+        {
+          status: "paid",
+          email,
+          posterUrl,
+          posterBase64: null, // clear after upload — no longer needed
+        },
       );
 
-      // Email the download link via Resend
+      // Email the download link
       await resend.emails.send({
         from: "One Piece Poster <noreply@yourdomain.com>",
         to: email,
         subject: "Your One Piece Poster is Ready! 🏴‍☠️",
         html: `
-          <h2>Your poster is ready, ${customerName}!</h2>
-          <p>Click the button below to download your custom One Piece poster:</p>
-          <a href="${posterUrl}" style="
-            display: inline-block;
-            padding: 12px 24px;
-            background: #e63946;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-          ">
-            Download Your Poster
-          </a>
-          <p style="color: #666; font-size: 12px; margin-top: 24px;">
-            This is a direct link to your poster image hosted securely.
-          </p>
+          <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+            <h2 style="color: #1a1a2e;">Your poster is ready, ${customerName}!</h2>
+            <p style="color: #444;">Click below to download your custom One Piece poster:</p>
+            <a href="${posterUrl}"
+               target="_blank"
+               style="
+                display: inline-block;
+                padding: 12px 28px;
+                background: #e63946;
+                color: white;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: bold;
+                margin: 16px 0;
+              ">
+              Download Your Poster
+            </a>
+            <p style="color: #999; font-size: 12px; margin-top: 24px;">
+              If the button doesn't work, copy this link:<br/>${posterUrl}
+            </p>
+          </div>
         `,
       });
     } catch (error) {
-      console.log("Error processing webhook:", error);
-      // Always return 200 to Stripe — never let it retry due to our errors
+      console.log("Webhook processing error:", error);
+      // Always return 200 — never let Stripe retry due to our errors
     }
   }
 
