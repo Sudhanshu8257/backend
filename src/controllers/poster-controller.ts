@@ -1,11 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import Stripe from "stripe";
-import { createCanvas, loadImage } from "canvas";
 import { Resend } from "resend";
 import ImageKit, { toFile } from "@imagekit/nodejs";
-import PosterSession from "../models/PosterSession.js";
-
+import Session from "../models/Session.js";
+import { PosterPrompt } from "../utils/constants.js";
+import { animefyImage } from "../routes/ai-helper.js";
+import "dotenv/config";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -13,86 +14,231 @@ const client = new ImageKit({
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
 });
 
+const RESET_HOURS = 24;
+
+const formatSession = (session: any) => ({
+  sessionId: session.sessionId,
+  generationCount: session.generationCount,
+  maxGenerations: session.maxGenerations,
+  attemptsLeft: Math.max(0, session.maxGenerations - session.generationCount),
+  generatedImages: session.generatedImages,
+  status: session.status,
+  lastResetAt: session.lastResetAt,
+  resetInMs: Math.max(
+    0,
+    new Date(session.lastResetAt).getTime() +
+      RESET_HOURS * 60 * 60 * 1000 -
+      Date.now(),
+  ),
+});
+
 // -------------------------------------------------------
-// HELPER: renderAndUpload
-// Renders poster using saved canvas state
-// Uploads to ImageKit and returns the public URL
+// HELPER: createNewSession
 // -------------------------------------------------------
-const renderAndUpload = async (session: any): Promise<string> => {
-  const POSTER_WIDTH = 800;
-  const POSTER_HEIGHT = 1100;
-
-  const canvas = createCanvas(POSTER_WIDTH, POSTER_HEIGHT);
-  const ctx = canvas.getContext("2d");
-
-  // Background
-  ctx.fillStyle = "#1a1a2e";
-  ctx.fillRect(0, 0, POSTER_WIDTH, POSTER_HEIGHT);
-
-  // User image
-  const img = await loadImage(session.canvasImage);
-  ctx.drawImage(
-    img,
-    session.imagePosition.x,
-    session.imagePosition.y,
-    session.imageSize.width,
-    session.imageSize.height,
-  );
-
-  // Poster name text
-  ctx.fillStyle = "#ffffff";
-  ctx.font = `bold ${session.textSize}px serif`;
-  ctx.textAlign = "center";
-  ctx.fillText(
-    session.posterName,
-    session.textPosition.x,
-    session.textPosition.y,
-  );
-
-  // Convert to base64 and upload to ImageKit
-  const buffer = canvas.toBuffer("image/png");
-  const base64 = buffer.toString("base64");
-  const uploadResponse = await client.files.upload({
-    file: base64,
-    fileName: `poster_${session.sessionId}.png`,
-
-    folder: "/posters",
-  });
-
-  return uploadResponse.url;
+const createNewSession = async () => {
+  const sessionId = uuidv4();
+  const session = await Session.create({ sessionId });
+  return formatSession(session);
 };
 
-// -------------------------------------------------------
-// POST /api/poster/save-session
-// Frontend calls this when user clicks Download
-// Saves canvas state, creates Stripe Checkout session
-// Returns: { checkoutUrl }
-// -------------------------------------------------------
+export const startSession = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { sessionId } = req.body;
+
+    if (sessionId) {
+      const existing = await Session.findOne({ sessionId });
+
+      if (existing) {
+        // Paid — give them a fresh session for a new poster
+        if (existing.status === "paid") {
+          return res.status(200).json(await createNewSession());
+        }
+
+        // Check 24hr reset
+        const hoursSinceReset =
+          (Date.now() - new Date(existing.lastResetAt).getTime()) /
+          (1000 * 60 * 60);
+
+        if (hoursSinceReset >= RESET_HOURS) {
+          const reset = await Session.findOneAndUpdate(
+            { sessionId },
+            {
+              generationCount: 0,
+              lastResetAt: new Date(),
+              generatedImages: [],
+              posterBase64: null,
+              posterName: null,
+              posterUrl: null,
+              stripeSessionId: null,
+              status: "active",
+            },
+            { new: true },
+          );
+          return res.status(200).json(formatSession(reset));
+        }
+
+        // Valid active session — return as-is
+        return res.status(200).json(formatSession(existing));
+      }
+    }
+
+    // No sessionId or not found — create fresh
+    return res.status(200).json(await createNewSession());
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Error", cause: error.message });
+  }
+};
+
+export const getSessionState = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { sessionId } = req.params;
+    const session = await Session.findOne({ sessionId });
+
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    return res.status(200).json(formatSession(session));
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Error", cause: error.message });
+  }
+};
+
+export const generateAnimeImage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No image uploaded" });
+    }
+
+    const { sessionId } = req.body;
+    if (!sessionId) {
+      return res.status(400).json({ message: "Missing sessionId" });
+    }
+
+    const session = await Session.findOne({ sessionId });
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    if (session.status === "paid") {
+      return res.status(403).json({
+        message:
+          "Session complete. Start a new session to create another poster.",
+      });
+    }
+
+    // Check 24hr reset before enforcing limit
+    const hoursSinceReset =
+      (Date.now() - new Date(session.lastResetAt).getTime()) / (1000 * 60 * 60);
+
+    if (hoursSinceReset >= RESET_HOURS) {
+      await Session.findOneAndUpdate(
+        { sessionId },
+        { generationCount: 0, lastResetAt: new Date(), generatedImages: [] },
+      );
+      session.generationCount = 0;
+    }
+
+    // Enforce generation limit
+    if (session.generationCount >= session.maxGenerations) {
+      const resetInMs = Math.max(
+        0,
+        new Date(session.lastResetAt).getTime() +
+          RESET_HOURS * 60 * 60 * 1000 -
+          Date.now(),
+      );
+      return res.status(429).json({
+        message: "Generation limit reached",
+        attemptsLeft: 0,
+        resetInMs,
+      });
+    }
+    // Generate anime image via Gemini
+    const base64Input = req.file.buffer.toString("base64");
+    const animeBase64 = await animefyImage(base64Input, PosterPrompt);
+
+    // Upload to ImageKit
+    const fileBuffer = Buffer.from(animeBase64, "base64");
+    const file = await toFile(fileBuffer, `anime_${Date.now()}.png`, {
+      type: "image/png",
+    });
+
+    const uploadResponse = await client.files.upload({
+      file,
+      fileName: `anime_${Date.now()}.png`,
+      folder: "/anime-generated",
+    });
+
+    // Increment count + push to history
+    const updated = await Session.findOneAndUpdate(
+      { sessionId },
+      {
+        $inc: { generationCount: 1 },
+        $push: {
+          generatedImages: {
+            url: uploadResponse.url,
+            fileId: uploadResponse.fileId,
+          },
+        },
+      },
+      { new: true },
+    );
+
+    return res.status(200).json({
+      success: true,
+      imageUrl: uploadResponse.url,
+      fileId: uploadResponse.fileId,
+      attemptsLeft: Math.max(
+        0,
+        updated.maxGenerations - updated.generationCount,
+      ),
+      generatedImages: updated.generatedImages,
+    });
+  } catch (error: any) {
+    console.error(error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 export const saveSession = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
-    const { posterBase64, posterName } = req.body;
+    const { sessionId, posterBase64, posterName } = req.body;
 
-    if (!posterBase64 || !posterName) {
-      return res
-        .status(400)
-        .json({ message: "Missing posterBase64 or posterName" });
+    if (!sessionId || !posterBase64 || !posterName) {
+      return res.status(400).json({
+        message: "Missing sessionId, posterBase64 or posterName",
+      });
     }
 
-    const sessionId = uuidv4();
+    const session = await Session.findOne({ sessionId });
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
 
-    // Save base64 + name to MongoDB
-    await PosterSession.create({
-      sessionId,
-      posterBase64,
-      posterName,
-      status: "pending",
-    });
+    if (session.status === "paid") {
+      return res.status(403).json({
+        message: "Session already paid. Start a new session.",
+      });
+    }
 
-    // Create Stripe Checkout session
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -109,15 +255,22 @@ export const saveSession = async (
           quantity: 1,
         },
       ],
-      metadata: { sessionId }, // bridge to webhook
-      success_url: `http://localhost:3000/success?session=${sessionId}`,
-      cancel_url: `http://localhost:3000/test2`,
+      metadata: { sessionId },
+      // success_url: `${process.env.FRONTEND_URL}/poster/success/${sessionId}`,
+      // cancel_url: `${process.env.FRONTEND_URL}/poster/${sessionId}`,
+      success_url: `http://localhost:3000/poster/success/${sessionId}`,
+      cancel_url: `http://localhost:3000/poster/${sessionId}`,
     });
 
-    // Save stripeSessionId
-    await PosterSession.findOneAndUpdate(
+    // Save everything to session document
+    await Session.findOneAndUpdate(
       { sessionId },
-      { stripeSessionId: checkoutSession.id }
+      {
+        posterBase64,
+        posterName,
+        stripeSessionId: checkoutSession.id,
+        status: "pending_payment",
+      },
     );
 
     return res.status(200).json({ checkoutUrl: checkoutSession.url });
@@ -127,25 +280,18 @@ export const saveSession = async (
   }
 };
 
-// -------------------------------------------------------
-// POST /api/stripe/webhook
-// Stripe calls this after successful payment
-// Renders poster → uploads to ImageKit → saves URL to DB
-// Emails download link via Resend
-// IMPORTANT: This route needs raw body middleware (express.raw)
-// -------------------------------------------------------
 export const stripeWebhook = async (req: Request, res: Response) => {
   const sig = req.headers["stripe-signature"];
   let event: Stripe.Event;
 
   try {
     event = stripe.webhooks.constructEvent(
-      req.body, // must be raw Buffer
+      req.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET,
     );
   } catch (error) {
-    console.log("Webhook signature verification failed:", error.message);
+    console.log("Webhook signature failed:", error.message);
     return res.status(400).send(`Webhook Error: ${error.message}`);
   }
 
@@ -156,29 +302,26 @@ export const stripeWebhook = async (req: Request, res: Response) => {
     const customerName = stripeSession.customer_details?.name || "Nakama";
 
     try {
-      const posterSession = await PosterSession.findOne({ sessionId });
-      if (!posterSession) throw new Error("Session not found");
+      const session = await Session.findOne({ sessionId });
+      if (!session) throw new Error("Session not found");
+      if (!session.posterBase64) throw new Error("No poster data in session");
 
+      // Upload base64 to ImageKit
       const uploadResponse = await client.files.upload({
-        file: posterSession.posterBase64,
+        file: session.posterBase64,
         fileName: `poster_${sessionId}.png`,
-
         folder: "/posters",
       });
+
       const posterUrl = uploadResponse.url;
 
-      // Mark as paid, save email + posterUrl, clear base64 to save space
-      await PosterSession.findOneAndUpdate(
+      // Mark paid, save email + URL, clear base64
+      await Session.findOneAndUpdate(
         { sessionId },
-        {
-          status: "paid",
-          email,
-          posterUrl,
-          posterBase64: null, // clear after upload — no longer needed
-        },
+        { status: "paid", email, posterUrl, posterBase64: null },
       );
 
-      // Email the download link
+      // Email download link
       await resend.emails.send({
         from: "One Piece Poster <onboarding@resend.dev>",
         to: email,
@@ -209,18 +352,13 @@ export const stripeWebhook = async (req: Request, res: Response) => {
       });
     } catch (error) {
       console.log("Webhook processing error:", error);
-      // Always return 200 — never let Stripe retry due to our errors
+      // Always return 200 — never let Stripe retry our errors
     }
   }
 
   return res.status(200).json({ received: true });
 };
 
-// -------------------------------------------------------
-// GET /api/poster/session/:sessionId
-// Frontend polls this on the success page
-// Returns posterUrl once webhook has finished processing
-// -------------------------------------------------------
 export const getSession = async (
   req: Request,
   res: Response,
@@ -229,9 +367,9 @@ export const getSession = async (
   try {
     const { sessionId } = req.params;
 
-    const session = await PosterSession.findOne(
+    const session = await Session.findOne(
       { sessionId },
-      { status: 1, posterUrl: 1, posterName: 1 }, // only return what frontend needs
+      { status: 1, posterUrl: 1, posterName: 1 },
     );
 
     if (!session) {
@@ -240,7 +378,7 @@ export const getSession = async (
 
     return res.status(200).json({
       status: session.status,
-      posterUrl: session.posterUrl,
+      posterUrl: session.posterUrl ?? null,
       posterName: session.posterName,
     });
   } catch (error) {
