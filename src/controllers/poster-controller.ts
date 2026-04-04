@@ -322,34 +322,34 @@ export const stripeWebhook = async (req: Request, res: Response) => {
       );
 
       // Email download link
-      await resend.emails.send({
-        from: "One Piece Poster <onboarding@resend.dev>",
-        to: email,
-        subject: "Your One Piece Poster is Ready! 🏴‍☠️",
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
-            <h2 style="color: #1a1a2e;">Your poster is ready, ${customerName}!</h2>
-            <p style="color: #444;">Click below to download your custom One Piece poster:</p>
-            <a href="${posterUrl}"
-               target="_blank"
-               style="
-                display: inline-block;
-                padding: 12px 28px;
-                background: #e63946;
-                color: white;
-                text-decoration: none;
-                border-radius: 6px;
-                font-weight: bold;
-                margin: 16px 0;
-              ">
-              Download Your Poster
-            </a>
-            <p style="color: #999; font-size: 12px; margin-top: 24px;">
-              If the button doesn't work, copy this link:<br/>${posterUrl}
-            </p>
-          </div>
-        `,
-      });
+      // await resend.emails.send({
+      //   from: "One Piece Poster <onboarding@resend.dev>",
+      //   to: email,
+      //   subject: "Your One Piece Poster is Ready! 🏴‍☠️",
+      //   html: `
+      //     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+      //       <h2 style="color: #1a1a2e;">Your poster is ready, ${customerName}!</h2>
+      //       <p style="color: #444;">Click below to download your custom One Piece poster:</p>
+      //       <a href="${posterUrl}"
+      //          target="_blank"
+      //          style="
+      //           display: inline-block;
+      //           padding: 12px 28px;
+      //           background: #e63946;
+      //           color: white;
+      //           text-decoration: none;
+      //           border-radius: 6px;
+      //           font-weight: bold;
+      //           margin: 16px 0;
+      //         ">
+      //         Download Your Poster
+      //       </a>
+      //       <p style="color: #999; font-size: 12px; margin-top: 24px;">
+      //         If the button doesn't work, copy this link:<br/>${posterUrl}
+      //       </p>
+      //     </div>
+      //   `,
+      // });
     } catch (error) {
       console.log("Webhook processing error:", error);
       // Always return 200 — never let Stripe retry our errors
