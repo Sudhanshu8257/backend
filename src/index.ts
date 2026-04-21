@@ -9,7 +9,7 @@ import cors from "cors";
 import { welcomeMessage } from "./utils/constants.js";
 import path from "path";
 import { fileURLToPath } from "url";
-import { stripeWebhook } from "./controllers/poster-controller.js";
+import { lemonSqueezyWebhook, stripeWebhook } from "./controllers/poster-controller.js";
 
 // Get __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -27,6 +27,12 @@ app.post(
   "/api/v1/stripe/webhook",
   express.raw({ type: "application/json" }),
   stripeWebhook
+);
+
+app.post(
+  "/api/v1/lemonsqueezy/webhook",
+  express.raw({ type: "application/json" }),
+  lemonSqueezyWebhook
 );
 
 app.use(express.json({

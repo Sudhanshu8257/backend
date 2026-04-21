@@ -22,6 +22,7 @@ const sessionSchema = new Schema(
     posterUrl:       { type: String, default: null }, // filled after webhook
     email:           { type: String, default: null }, // filled by Stripe webhook
     stripeSessionId: { type: String, default: null },
+    lemonSqueezyId: { type: String, default: null },
 
     status: {
       type: String,
