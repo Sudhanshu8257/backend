@@ -169,23 +169,23 @@ export const generateAnimeImage = async (
       });
     }
     // Generate anime image via Gemini
-    // const base64Input = req.file.buffer.toString("base64");
-    // const animeBase64 = await animefyImage(base64Input, PosterPrompt);
+    const base64Input = req.file.buffer.toString("base64");
+    const animeBase64 = await animefyImage(base64Input, PosterPrompt);
 
-    // // Upload to ImageKit
-    // const fileBuffer = Buffer.from(animeBase64, "base64");
-    // const file = await toFile(fileBuffer, `anime_${Date.now()}.png`, {
-    //   type: "image/png",
-    // });
+    // Upload to ImageKit
+    const fileBuffer = Buffer.from(animeBase64, "base64");
+    const file = await toFile(fileBuffer, `anime_${Date.now()}.png`, {
+      type: "image/png",
+    });
 
-    // const uploadResponse = await client.files.upload({
-    //   file,
-    //   fileName: `anime_${Date.now()}.png`,
-    //   folder: "/anime-generated",
-    // });
+    const uploadResponse = await client.files.upload({
+      file,
+      fileName: `anime_${Date.now()}.png`,
+      folder: "/anime-generated",
+    });
 
-    let url = "https://ik.imagekit.io/r8pra5q2fr/sample/10.png"
-    let id  = "69d0a1115c7cd75eb8c205ec"
+    // let url = "https://ik.imagekit.io/r8pra5q2fr/sample/10.png"
+    // let id  = "69d0a1115c7cd75eb8c205ec"
 
     // Increment count + push to history
     const updated = await Session.findOneAndUpdate(
@@ -194,10 +194,10 @@ export const generateAnimeImage = async (
         $inc: { generationCount: 1 },
         $push: {
           generatedImages: {
-            // url: uploadResponse.url,
-            // fileId: uploadResponse.fileId,
-            url: url,
-            fileId: id,
+            url: uploadResponse.url,
+            fileId: uploadResponse.fileId,
+            // url: url,
+            // fileId: id,
           },
         },
       },
@@ -206,10 +206,10 @@ export const generateAnimeImage = async (
 
     return res.status(200).json({
       success: true,
-      imageUrl: url,
-      fileId: id,
-      // imageUrl: uploadResponse.url,
-      // fileId: uploadResponse.fileId,
+      // imageUrl: url,
+      // fileId: id,
+      imageUrl: uploadResponse.url,
+      fileId: uploadResponse.fileId,
       attemptsLeft: Math.max(
         0,
         updated.maxGenerations - updated.generationCount,
@@ -330,37 +330,36 @@ export const stripeWebhook = async (req: Request, res: Response) => {
       );
 
       // Email download link
-      // await resend.emails.send({
-      //   from: "One Piece Poster <onboarding@resend.dev>",
-      //   to: email,
-      //   subject: "Your One Piece Poster is Ready! 🏴‍☠️",
-      //   html: `
-      //     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
-      //       <h2 style="color: #1a1a2e;">Your poster is ready, ${customerName}!</h2>
-      //       <p style="color: #444;">Click below to download your custom One Piece poster:</p>
-      //       <a href="${posterUrl}"
-      //          target="_blank"
-      //          style="
-      //           display: inline-block;
-      //           padding: 12px 28px;
-      //           background: #e63946;
-      //           color: white;
-      //           text-decoration: none;
-      //           border-radius: 6px;
-      //           font-weight: bold;
-      //           margin: 16px 0;
-      //         ">
-      //         Download Your Poster
-      //       </a>
-      //       <p style="color: #999; font-size: 12px; margin-top: 24px;">
-      //         If the button doesn't work, copy this link:<br/>${posterUrl}
-      //       </p>
-      //     </div>
-      //   `,
-      // });
+      await resend.emails.send({
+        from: "One Piece Poster <onboarding@resend.dev>",
+        to: email,
+        subject: "Your One Piece Poster is Ready! 🏴‍☠️",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+            <h2 style="color: #1a1a2e;">Your poster is ready, ${customerName}!</h2>
+            <p style="color: #444;">Click below to download your custom One Piece poster:</p>
+            <a href="${posterUrl}"
+               target="_blank"
+               style="
+                display: inline-block;
+                padding: 12px 28px;
+                background: #e63946;
+                color: white;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: bold;
+                margin: 16px 0;
+              ">
+              Download Your Poster
+            </a>
+            <p style="color: #999; font-size: 12px; margin-top: 24px;">
+              If the button doesn't work, copy this link:<br/>${posterUrl}
+            </p>
+          </div>
+        `,
+      });
     } catch (error) {
       console.log("Webhook processing error:", error);
-      // Always return 200 — never let Stripe retry our errors
     }
   }
 
@@ -377,7 +376,7 @@ export const getSession = async (
 
     const session = await Session.findOne(
       { sessionId },
-      { status: 1, posterUrl: 1, posterName: 1 },
+      { status: 1, posterUrl: 1, posterName: 1, lemonSqueezyId: 1 },
     );
 
     if (!session) {
@@ -388,6 +387,7 @@ export const getSession = async (
       status: session.status,
       posterUrl: session.posterUrl ?? null,
       posterName: session.posterName,
+      lemonSqueezyId: session.lemonSqueezyId ?? null,
     });
   } catch (error) {
     console.log(error);
@@ -421,50 +421,53 @@ export const saveSession = async (
     }
 
     // Create Lemon Squeezy Checkout via Fetch API
-    const lsResponse = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
-      method: "POST",
-      headers: {
-        Accept: "application/vnd.api+json",
-        "Content-Type": "application/vnd.api+json",
-        Authorization: `Bearer ${process.env.LEMON_SQUEEZY_API_KEY}`,
-      },
-      body: JSON.stringify({
-        data: {
-          type: "checkouts",
-          attributes: {
-            custom_price: 199, // $1.99 in cents
-            product_options: {
-              name: "One Piece Poster Download",
-              description: `Custom poster for ${posterName}`,
-              receipt_button_text: "View Your Poster",
-              // success_url: `${process.env.FRONTEND_URL}/poster/success/${sessionId}`,
-              // cancel_url: `${process.env.FRONTEND_URL}/poster/${sessionId}`,
-              receipt_link_url: `http://localhost:3000/poster/success/${sessionId}`,
-              redirect_url: `http://localhost:3000/poster/${sessionId}`,
-            },
-            checkout_data: {
-              custom: {
-                sessionId: sessionId,
-              },
-            },
-          },
-          relationships: {
-            store: {
-              data: {
-                type: "stores",
-                id: process.env.LEMON_SQUEEZY_STORE_ID,
-              },
-            },
-            variant: {
-              data: {
-                type: "variants",
-                id: process.env.LEMON_SQUEEZY_VARIANT_ID,
-              },
-            },
-          },
+    const lsResponse = await fetch(
+      "https://api.lemonsqueezy.com/v1/checkouts",
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/vnd.api+json",
+          "Content-Type": "application/vnd.api+json",
+          Authorization: `Bearer ${process.env.LEMON_SQUEEZY_API_KEY}`,
         },
-      }),
-    });
+        body: JSON.stringify({
+          data: {
+            type: "checkouts",
+            attributes: {
+              custom_price: 199, // $1.99 in cents
+              product_options: {
+                name: "One Piece Poster Download",
+                description: `Custom poster for ${posterName}`,
+                receipt_button_text: "View Your Poster",
+                success_url: `${process.env.FRONTEND_URL}/poster/status/${sessionId}`,
+                cancel_url: `${process.env.FRONTEND_URL}/poster/status/${sessionId}`,
+                // receipt_link_url: `http://localhost:3000/poster/status/${sessionId}`,
+                // redirect_url: `http://localhost:3000/poster/status/${sessionId}`,
+              },
+              checkout_data: {
+                custom: {
+                  sessionId: sessionId,
+                },
+              },
+            },
+            relationships: {
+              store: {
+                data: {
+                  type: "stores",
+                  id: process.env.LEMON_SQUEEZY_STORE_ID,
+                },
+              },
+              variant: {
+                data: {
+                  type: "variants",
+                  id: process.env.LEMON_SQUEEZY_VARIANT_ID,
+                },
+              },
+            },
+          },
+        }),
+      },
+    );
 
     const checkoutData = await lsResponse.json();
 
@@ -480,10 +483,13 @@ export const saveSession = async (
         posterName,
         lemonSqueezyId: checkoutData.data.id, // Replaced stripeSessionId
         status: "pending_payment",
+        downloadType: "paid",
       },
     );
 
-    return res.status(200).json({ checkoutUrl: checkoutData.data.attributes.url });
+    return res
+      .status(200)
+      .json({ checkoutUrl: checkoutData.data.attributes.url });
   } catch (error: any) {
     console.log(error);
     return res.status(500).json({ message: "Error", cause: error.message });
@@ -501,15 +507,17 @@ export const lemonSqueezyWebhook = async (req: Request, res: Response) => {
     const digest = Buffer.from(hmac.update(req.body).digest("hex"), "utf8");
     const sigBuffer = Buffer.from(signature || "", "utf8");
 
-    if (!crypto.timingSafeEqual(new Uint8Array(digest), new Uint8Array(sigBuffer))) {
+    if (
+      !crypto.timingSafeEqual(new Uint8Array(digest), new Uint8Array(sigBuffer))
+    ) {
       throw new Error("Invalid signature");
-    } 
+    }
 
     // Parse the body now that we've verified it
-    event = typeof req.body === "string" || Buffer.isBuffer(req.body)
-      ? JSON.parse(req.body.toString())
-      : req.body;
-
+    event =
+      typeof req.body === "string" || Buffer.isBuffer(req.body)
+        ? JSON.parse(req.body.toString())
+        : req.body;
   } catch (error: any) {
     console.log("Webhook signature failed:", error.message);
     return res.status(400).send(`Webhook Error: ${error.message}`);
@@ -542,34 +550,34 @@ export const lemonSqueezyWebhook = async (req: Request, res: Response) => {
       );
 
       // Email download link
-      // await resend.emails.send({
-      //   from: "One Piece Poster <onboarding@resend.dev>",
-      //   to: email,
-      //   subject: "Your One Piece Poster is Ready! 🏴‍☠️",
-      //   html: `
-      //     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
-      //       <h2 style="color: #1a1a2e;">Your poster is ready, ${customerName}!</h2>
-      //       <p style="color: #444;">Click below to download your custom One Piece poster:</p>
-      //       <a href="${posterUrl}"
-      //          target="_blank"
-      //          style="
-      //           display: inline-block;
-      //           padding: 12px 28px;
-      //           background: #e63946;
-      //           color: white;
-      //           text-decoration: none;
-      //           border-radius: 6px;
-      //           font-weight: bold;
-      //           margin: 16px 0;
-      //         ">
-      //         Download Your Poster
-      //       </a>
-      //       <p style="color: #999; font-size: 12px; margin-top: 24px;">
-      //         If the button doesn't work, copy this link:<br/>${posterUrl}
-      //       </p>
-      //     </div>
-      //   `,
-      // });
+      await resend.emails.send({
+        from: "One Piece Poster <onboarding@resend.dev>",
+        to: email,
+        subject: "Your One Piece Poster is Ready! 🏴‍☠️",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+            <h2 style="color: #1a1a2e;">Your poster is ready, ${customerName}!</h2>
+            <p style="color: #444;">Click below to download your custom One Piece poster:</p>
+            <a href="${posterUrl}"
+               target="_blank"
+               style="
+                display: inline-block;
+                padding: 12px 28px;
+                background: #e63946;
+                color: white;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: bold;
+                margin: 16px 0;
+              ">
+              Download Your Poster
+            </a>
+            <p style="color: #999; font-size: 12px; margin-top: 24px;">
+              If the button doesn't work, copy this link:<br/>${posterUrl}
+            </p>
+          </div>
+        `,
+      });
     } catch (error) {
       console.log("Webhook processing error:", error);
       // Always return 200 — never let Stripe retry our errors
@@ -577,4 +585,56 @@ export const lemonSqueezyWebhook = async (req: Request, res: Response) => {
   }
 
   return res.status(200).json({ received: true });
+};
+
+export const freeDownload = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { sessionId, posterBase64, posterName } = req.body;
+
+    if (!sessionId || !posterBase64 || !posterName) {
+      return res.status(400).json({
+        message: "Missing sessionId, posterBase64 or posterName",
+      });
+    }
+
+    const session = await Session.findOne({ sessionId });
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    if (session.status === "paid") {
+      return res.status(403).json({
+        message: "Session already paid. Start a new session.",
+      });
+    }
+
+    // Upload base64 directly to ImageKit (no payment step)
+    const uploadResponse = await client.files.upload({
+      file: posterBase64,
+      fileName: `poster_${sessionId}.png`,
+      folder: "/posters",
+    });
+
+    const posterUrl = uploadResponse.url;
+
+    // Mark session as completed with free download type
+    await Session.findOneAndUpdate(
+      { sessionId },
+      {
+        posterBase64,
+        posterName,
+        posterUrl,
+        status: "paid",
+        downloadType: "free",
+      },
+    );
+    return res.status(200).json({ posterUrl });
+  } catch (error: any) {
+    console.log(error);
+    return res.status(500).json({ message: "Error", cause: error.message });
+  }
 };

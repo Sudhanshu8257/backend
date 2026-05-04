@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  freeDownload,
   generateAnimeImage,
   getSession,
   getSessionState,
@@ -15,9 +16,9 @@ posterRoutes.post("/webhook", stripeWebhook);
 posterRoutes.post("/new", startSession);
 posterRoutes.get("/session/:sessionId", getSessionState);
 
-
 posterRoutes.post("/save", saveSession);
 posterRoutes.get("/download/:sessionId", getSession);
+posterRoutes.post("/free-download", freeDownload);
 
 posterRoutes.post(
   "/generate-anime",

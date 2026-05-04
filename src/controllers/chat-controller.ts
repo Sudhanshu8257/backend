@@ -27,13 +27,15 @@ export async function getChat(req: Request, res: Response, next: NextFunction) {
 
     const model = genAI.getGenerativeModel({
       model: "gemini-3-flash-preview",
-      //@ts-ignore
       systemInstruction:
         "your age is 3 created by sudhanshu.You are a factual AI assistant named Converse. You can access and process information from the real world to answer user questions in a comprehensive and informative way.",
     });
 
     const chat = model.startChat({
-      history: last20Messages,
+      history: last20Messages.map((msg) => ({
+        role: msg.role,
+        parts: [{ text: msg.parts }],
+      })),
     });
 
     const result = await chat.sendMessage(message);
@@ -53,7 +55,7 @@ export async function getChat(req: Request, res: Response, next: NextFunction) {
 export const sendChatsToUser = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     //user token check
@@ -74,7 +76,7 @@ export const sendChatsToUser = async (
 export const deleteChats = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const personalityId = req.query.personalityId as string;
@@ -130,7 +132,7 @@ export const deleteChats = async (
 export async function getChatV2(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const { message, personalityId } = req.body;
   try {
@@ -147,16 +149,15 @@ export async function getChatV2(
     let conversation: any;
 
     if (personalityId) {
-      const personality = await Personality.findById(personalityId).select(
-        "systemInstruction"
-      );
+      const personality =
+        await Personality.findById(personalityId).select("systemInstruction");
       if (!personality)
         return res.status(404).json({ message: "Personality not found" });
 
       conversation = await Conversation.findOneAndUpdate(
         { user: user._id, personality: personalityId },
         { $setOnInsert: { user: user._id, personality: personalityId } },
-        { new: true, upsert: true }
+        { new: true, upsert: true },
       );
       const last20Messages = await Message.find({
         conversation: conversation._id,
@@ -214,7 +215,7 @@ export async function getChatV2(
 export async function getPersonalityMessagesById(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const { personalityId } = req.query;
   let { page, perPage } = req.query;
@@ -315,7 +316,7 @@ export async function getPersonalityMessagesById(
 export async function getPersonalityById(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const id = req.query.id as string;
@@ -327,9 +328,8 @@ export async function getPersonalityById(
       });
     }
 
-    const personality = await Personality.findById(id).select(
-      "-systemInstruction"
-    );
+    const personality =
+      await Personality.findById(id).select("-systemInstruction");
 
     if (!personality) {
       return res.status(404).json({
@@ -356,7 +356,7 @@ export async function getPersonalityById(
 export async function getAllPersonalities(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { search, featured, id, page = 1, perPage = 100 } = req.query;
@@ -364,7 +364,7 @@ export async function getAllPersonalities(
     const pageNumber = Math.max(1, parseInt(page as string, 10) || 1);
     const limit = Math.min(
       100,
-      Math.max(1, parseInt(perPage as string, 10) || 100)
+      Math.max(1, parseInt(perPage as string, 10) || 100),
     );
     const skip = (pageNumber - 1) * limit;
 
@@ -478,7 +478,7 @@ export async function getAllPersonalities(
 export async function getPersonalityByName(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const { name } = req.query;

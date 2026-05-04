@@ -24,12 +24,14 @@ export const getGeminiResponse = async ({
   try {
     const model = genAI.getGenerativeModel({
       model: "gemini-3-flash-preview",
-      // @ts-expect-error SystemInstruction
       systemInstruction,
     });
 
     const chat = model.startChat({
-      history: lastMessages,
+      history: lastMessages.map((msg) => ({
+        role: msg.role,
+        parts: [{ text: msg.parts }], // Convert string to Part[] on the fly
+      })),
     });
 
     const result = await chat.sendMessage(newmessage);
@@ -97,9 +99,9 @@ export const getGeminiVisionResponse = async ({
     // 1. Use a vision-capable model (Gemini 1.5 Flash is fast and cheap for images)
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
-      config: {
-        tools,
-        systemInstruction,
+      systemInstruction: {
+        role: "system",
+        parts: [{ text: systemInstruction }],
       },
     });
 
@@ -185,4 +187,3 @@ export async function animefyImage(
     throw new Error(error.message);
   }
 }
-

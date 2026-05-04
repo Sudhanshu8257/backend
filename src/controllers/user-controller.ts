@@ -45,7 +45,7 @@ export const userSignup = async (
     const expires = new Date();
     expires.setDate(expires.getDate() + 7);
     res.cookie(COOKIE_NAME, token, {
-      sameSite: "None",
+      sameSite: "none",
       secure: true,
       expires,
     });
@@ -88,7 +88,7 @@ export const userLogin = async (
     const expires = new Date();
     expires.setDate(expires.getDate() + 7);
     res.cookie(COOKIE_NAME, token, {
-      sameSite: "None",
+      sameSite: "none",
       secure: true,
       expires,
     });
