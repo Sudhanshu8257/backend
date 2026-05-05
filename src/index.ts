@@ -1,4 +1,3 @@
-
 import { connectToDatabase } from "./db/connection.js";
 import express from "express";
 import { config } from "dotenv";
@@ -9,7 +8,10 @@ import cors from "cors";
 import { welcomeMessage } from "./utils/constants.js";
 import path from "path";
 import { fileURLToPath } from "url";
-import { lemonSqueezyWebhook, stripeWebhook } from "./controllers/poster-controller.js";
+import {
+  lemonSqueezyWebhook,
+  stripeWebhook,
+} from "./controllers/poster-controller.js";
 
 // Get __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -19,30 +21,38 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const corsConfig = {
   credentials: true,
-  origin: ["http://localhost:3000","http://localhost:5173","https://frontend-nine-umber-97.vercel.app"],
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://frontend-nine-umber-97.vercel.app",
+  ],
 };
 config({ path: [".env"] });
 
 app.post(
   "/api/v1/stripe/webhook",
   express.raw({ type: "application/json" }),
-  stripeWebhook
+  stripeWebhook,
 );
 
 app.post(
   "/api/v1/lemonsqueezy/webhook",
   express.raw({ type: "application/json" }),
-  lemonSqueezyWebhook
+  lemonSqueezyWebhook,
 );
 
-app.use(express.json({
-  limit: "50mb"
-}));
+app.use(
+  express.json({
+    limit: "50mb",
+  }),
+);
 
-app.use(express.urlencoded({
-  limit: "50mb",
-  extended: true
-}));
+app.use(
+  express.urlencoded({
+    limit: "50mb",
+    extended: true,
+  }),
+);
 
 app.use(cors(corsConfig));
 app.use(cookieParser(process.env.COOKIE_SECRET));
@@ -58,12 +68,12 @@ app.use(cookieParser(process.env.COOKIE_SECRET));
 //   border-radius: 5px;">${message}</p>`);
 // });u')))
 
-app.use('/celebs', express.static(path.join(__dirname, '../celebs')));
-app.use('/anime', express.static(path.join(__dirname, '../anime')));
-app.use('/user', express.static(path.join(__dirname, '../user')));
+app.use("/celebs", express.static(path.join(__dirname, "../celebs")));
+app.use("/anime", express.static(path.join(__dirname, "../anime")));
+app.use("/user", express.static(path.join(__dirname, "../user")));
 app.get("/", (req, res) => {
   const message = welcomeMessage();
-    res.send(`<p style="background-image: linear-gradient(to right, #f77979, #9b59b6);
+  res.send(`<p style="background-image: linear-gradient(to right, #f77979, #9b59b6);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     font-size: 2em;
@@ -71,12 +81,20 @@ app.get("/", (req, res) => {
     padding: 10px;
     text-align: center;
     border-radius: 5px;">${message}</p>`);
+});
+
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    uptime: process.uptime(),
+    timestamp: Date.now(),
   });
+});
 
 app.use("/api/v1", appRouter);
 const PORT = process.env.PORT || 3000;
 connectToDatabase()
   .then(() => {
-    app.listen(PORT, () => console.log("server open on",PORT));
+    app.listen(PORT, () => console.log("server open on", PORT));
   })
   .catch((err) => console.log(err));
